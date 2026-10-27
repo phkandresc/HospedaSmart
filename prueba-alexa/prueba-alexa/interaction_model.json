@@ -1,0 +1,87 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "hospeda smart",
+      "intents": [
+        { "name": "AMAZON.CancelIntent", "samples": [] },
+        { "name": "AMAZON.HelpIntent", "samples": [] },
+        { "name": "AMAZON.StopIntent", "samples": [] },
+        { "name": "AMAZON.NavigateHomeIntent", "samples": [] },
+        { "name": "AMAZON.FallbackIntent", "samples": [] },
+        {
+          "name": "EncenderVentiladorIntent",
+          "samples": [
+            "enciende el ventilador",
+            "prende el ventilador",
+            "activa el ventilador",
+            "encienda el ventilador",
+            "prenda el ventilador",
+            "active el ventilador",
+            "encender el ventilador",
+            "prender el ventilador",
+            "pon el ventilador"
+          ]
+        },
+        {
+          "name": "ApagarVentiladorIntent",
+          "samples": [
+            "apaga el ventilador",
+            "desactiva el ventilador",
+            "detén el ventilador",
+            "apague el ventilador",
+            "desactive el ventilador",
+            "apagar el ventilador",
+            "quita el ventilador"
+          ]
+        },
+        {
+          "name": "EncenderLuzIntent",
+          "samples": [
+            "enciende la luz",
+            "prende la luz",
+            "encienda la luz",
+            "prenda la luz",
+            "encender la luz",
+            "prender la luz",
+            "enciende el foco",
+            "prende el foco"
+          ]
+        },
+        {
+          "name": "ApagarLuzIntent",
+          "samples": [
+            "apaga la luz",
+            "apague la luz",
+            "apagar la luz",
+            "apaga el foco",
+            "apague el foco",
+            "quita la luz"
+          ]
+        },
+        {
+          "name": "AbrirPuertaIntent",
+          "samples": [
+            "abre la puerta",
+            "abra la puerta",
+            "abrir la puerta",
+            "desbloquea la puerta",
+            "desbloquee la puerta",
+            "abre el cerrojo"
+          ]
+        },
+        {
+          "name": "CerrarPuertaIntent",
+          "samples": [
+            "cierra la puerta",
+            "cierre la puerta",
+            "cerrar la puerta",
+            "bloquea la puerta",
+            "bloquee la puerta",
+            "cierra el cerrojo"
+          ]
+        }
+      ],
+      "types": []
+    }
+  }
+}
