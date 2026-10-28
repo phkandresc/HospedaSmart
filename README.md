@@ -10,7 +10,8 @@ HospedaSmart es una plataforma que fusiona la administración logística en la n
 
 **Empieza aquí →** [`documentacion/guia-arquitectura.md`](documentacion/guia-arquitectura.md)
 
-La guía de arquitectura explica todo el proyecto en un solo documento: qué estamos construyendo, cómo funciona, dónde va cada cosa y cómo trabajar en equipo.
+* **Guía de Pruebas (Simulación vs Hardware):** [`documentacion/guia-pruebas-hardware-y-simulacion.md`](documentacion/guia-pruebas-hardware-y-simulacion.md) (cómo probar hoy en tu laptop y mañana con el kit y Alexa).
+* **Guía de Arquitectura completa:** [`documentacion/guia-arquitectura.md`](documentacion/guia-arquitectura.md) (explica todo el sistema en 15 min).
 
 Para los documentos técnicos detallados, ver [`documentacion/arquitectura/`](documentacion/arquitectura/).
 

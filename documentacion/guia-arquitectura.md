@@ -329,6 +329,7 @@ principio, pero están disponibles cuando se necesiten:
 
 | Documento | Qué contiene |
 |---|---|
+| `guia-pruebas-hardware-y-simulacion.md` | Cómo probar el sistema hoy en simulación y mañana con hardware real |
 | `arquitectura/00-metodo-y-drivers.md` | Las 7 fuerzas que condicionan el diseño |
 | `arquitectura/01-contexto-y-alcance.md` | Actores, qué se simula, qué está fuera de alcance |
 | `arquitectura/02-contenedores.md` | Los 5 componentes, el contrato WebSocket, los ADR |
