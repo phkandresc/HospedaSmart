@@ -95,8 +95,10 @@ def main():
         print("3. 'Alexa, apaga el ventilador' (ApagarVentiladorIntent)")
         print("4. 'Alexa, enciende la luz' (EncenderLuzIntent)")
         print("5. 'Alexa, apaga la luz' (ApagarLuzIntent)")
-        print("6. Ejecutar todas en secuencia")
-        opcion = input("Elige una opción (1-6): ").strip()
+        print("6. 'Alexa, abre la puerta' (AbrirPuertaIntent)")
+        print("7. 'Alexa, cierra la puerta' (CerrarPuertaIntent)")
+        print("8. Ejecutar todas en secuencia")
+        opcion = input("Elige una opción (1-8): ").strip()
 
     pruebas = {
         "1": ("LaunchRequest", "LaunchRequest", None),
@@ -104,9 +106,11 @@ def main():
         "3": ("Apagar Ventilador", "IntentRequest", "ApagarVentiladorIntent"),
         "4": ("Encender Luz", "IntentRequest", "EncenderLuzIntent"),
         "5": ("Apagar Luz", "IntentRequest", "ApagarLuzIntent"),
+        "6": ("Abrir Puerta", "IntentRequest", "AbrirPuertaIntent"),
+        "7": ("Cerrar Puerta", "IntentRequest", "CerrarPuertaIntent"),
     }
 
-    if opcion == "6":
+    if opcion == "8":
         for k in sorted(pruebas.keys()):
             nombre, req_type, intent = pruebas[k]
             enviar_peticion(nombre, req_type, intent)

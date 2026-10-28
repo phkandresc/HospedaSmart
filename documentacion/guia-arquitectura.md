@@ -137,8 +137,9 @@ HospedaSmart/
 ├── documentacion/                          ← 📖 todo lo que se lee, no se ejecuta
 │   ├── Propuesta de Proyecto.pdf
 │   ├── guia-arquitectura.md                ← ESTE ARCHIVO (léeme primero)
-│   ├── ANALISIS-prueba-alexa.md            ← análisis de la prueba de concepto
-│   ├── prueba-alexa-explicacion.md         ← explicación detallada del spike
+│   ├── guia-pruebas-hardware-y-simulacion.md ← cómo probar: simulación, Arduino, Alexa
+│   ├── ANALISIS-prueba-alexa.md            ← análisis de la prueba de concepto (histórico)
+│   ├── prueba-alexa-explicacion.md         ← explicación detallada del spike (histórico)
 │   └── arquitectura/                       ← documentos técnicos detallados
 │       ├── 00-metodo-y-drivers.md
 │       ├── 01-contexto-y-alcance.md
@@ -163,8 +164,9 @@ HospedaSmart/
 ├── mocks/                                  ← 🎭 servicios externos simulados (Docker)
 │
 ├── firmware/                               ← 🤖 sketch del Arduino
+│   └── sensor_diagnostics/                 ← banco de pruebas + órdenes remotas (OK:<orden>)
 │
-├── prueba-alexa/                           ← 🧪 prueba de concepto original (referencia)
+├── alexa/                                  ← 🗣️ interaction_model.json + guía de la consola
 │
 ├── docker-compose.yml                      ← levanta api + db + mocks
 ├── .gitignore

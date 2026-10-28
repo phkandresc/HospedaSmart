@@ -12,7 +12,7 @@ import asyncio
 import datetime
 import websockets
 
-from gateway.serial_bridge import bridge
+from gateway.serial_bridge import bridge, HardwareNoDisponible
 from gateway.protocol import command_to_serial
 
 API_WS_URL = os.getenv("API_WS_URL", "ws://localhost:8000/ws/gateway")
@@ -41,7 +41,8 @@ async def procesar_comando(ws, raw_msg: str):
         print(f"[GATEWAY] ⚠️ Dispositivo o acción no reconocida por el protocolo: {device} / {action}", flush=True)
         ok = False
     else:
-        ok = bridge.enviar(orden_serial)
+        # La lectura serie es bloqueante: se hace en un hilo para no congelar el WebSocket
+        ok = await asyncio.to_thread(bridge.enviar, orden_serial)
 
     # Construir ack de confirmación
     ack = {
@@ -87,6 +88,8 @@ def main():
     except KeyboardInterrupt:
         print("\n[GATEWAY] Gateway detenido por el usuario.")
         sys.exit(0)
+    except HardwareNoDisponible:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

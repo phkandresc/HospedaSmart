@@ -2,7 +2,7 @@
 #
 # Aquí irá el sketch definitivo del Arduino (el firmware de producción).
 #
-# El archivo sensor_diagnostics.ino que está en prueba-alexa/ es un BANCO DE PRUEBAS,
+# El sketch sensor_diagnostics/sensor_diagnostics.ino es un BANCO DE PRUEBAS,
 # no el firmware final. El firmware definitivo debe:
 #
 # 1. Ser una máquina de estados con millis() (sin delay() largos)
