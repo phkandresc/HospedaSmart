@@ -1,0 +1,4 @@
+# Entorno único de desarrollo (raíz del repo): API + gateway.
+# Usar Python 3.11–3.14; con 3.15 algunas dependencias aún no tienen binarios para Windows.
+-r api/requirements.txt
+-r gateway/requirements.txt

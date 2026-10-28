@@ -6,6 +6,12 @@ Soporta dos modos:
 1. Modo Hardware Real: detecta el Arduino por USB y se comunica a 115200 baudios.
 2. Modo Simulación: se activa automáticamente si no hay Arduino físico conectado
    o si la variable de entorno SIMULACION=true está activa.
+
+Variable SIMULACION:
+  - sin definir → automático (hardware si hay Arduino; si no, simulación)
+  - true        → siempre simulación
+  - false       → exige hardware real; si no se puede abrir el puerto, el gateway se detiene
+                  (evita creer que el Arduino responde cuando en realidad es el simulador)
 """
 import os
 import time
@@ -15,12 +21,21 @@ from serial.tools import list_ports
 
 BAUDRATE = int(os.getenv("BAUDRATE", "115200"))
 SERIAL_PORT = os.getenv("SERIAL_PORT", None)
-FORZAR_SIMULACION = os.getenv("SIMULACION", "false").lower() in ("true", "1")
+_SIMULACION = os.getenv("SIMULACION", "").lower()
+FORZAR_SIMULACION = _SIMULACION in ("true", "1")
+EXIGIR_HARDWARE = _SIMULACION in ("false", "0")
+# Espera del OK:<orden>; debe ser menor que el timeout de la API (2,5 s) para que el ack llegue a tiempo
+ESPERA_ACK_S = float(os.getenv("ESPERA_ACK_S", "2.0"))
+
+
+class HardwareNoDisponible(RuntimeError):
+    """El modo SIMULACION=false exige un Arduino real y no se pudo abrir el puerto."""
 
 
 def detectar_puerto_usb() -> str | None:
     """Busca el puerto serie USB del Arduino. Retorna None si no hay o si falla."""
     try:
+        # En Windows los COM por Bluetooth no tienen "USB" en el hwid, así que quedan fuera
         puertos_usb = [p.device for p in list_ports.comports() if "USB" in (p.hwid or "").upper() or "ACM" in p.device or "USB" in p.device]
         if len(puertos_usb) == 1:
             return puertos_usb[0]
@@ -39,7 +54,8 @@ class ArduinoBridge:
         self._puerto_configurado = puerto
         self._baudios = baudios
         self._serial: serial.Serial | None = None
-        self._lock = threading.Lock()
+        # RLock: _enviar_hardware reconecta llamando a conectar() con el lock ya tomado
+        self._lock = threading.RLock()
         self.modo_simulacion = False
         self._estado_simulado = {
             "ventilador": False,
@@ -62,20 +78,44 @@ class ArduinoBridge:
             with self._lock:
                 print(f"[SERIAL] Conectando a {puerto} a {self._baudios} baudios...", flush=True)
                 self._serial = serial.Serial(puerto, self._baudios, timeout=0.5)
-                # Abrir el puerto reinicia el Arduino; esperar a que inicialice
-                time.sleep(2.5)
-                self._serial.reset_input_buffer()
+                # Abrir el puerto reinicia el Arduino; esperar a que termine su arranque
+                self._esperar_arranque()
                 print(f"[SERIAL] ✅ Conectado exitosamente con hardware real en {puerto}.", flush=True)
                 self.modo_simulacion = False
         except Exception as e:
             self._activar_modo_simulacion(f"Fallo al abrir puerto {puerto}: {e}")
 
+    def _esperar_arranque(self, silencio: float = 0.6, maximo: float = 6.0) -> None:
+        """
+        Espera a que el Arduino termine de arrancar: el bootloader tarda ~1,5 s, el sketch
+        puede iniciar la LCD (~1 s más) y luego imprime su menú. Se considera listo cuando
+        ya llegó el texto de arranque y pasan `silencio` segundos sin datos; si el sketch no
+        imprime nada, se espera `maximo`. Con una espera fija de 2,5 s la primera orden
+        llegaba mientras la placa aún arrancaba y se perdía.
+        """
+        assert self._serial is not None
+        inicio = time.monotonic()
+        ultimo_dato: float | None = None
+        while time.monotonic() - inicio < maximo:
+            if self._serial.in_waiting:
+                self._serial.read(self._serial.in_waiting)
+                ultimo_dato = time.monotonic()
+            elif ultimo_dato is not None and time.monotonic() - ultimo_dato >= silencio:
+                break
+            time.sleep(0.05)
+        self._serial.reset_input_buffer()
+
     def _activar_modo_simulacion(self, motivo: str) -> None:
+        if EXIGIR_HARDWARE:
+            print(f"[SERIAL] ❌ {motivo}", flush=True)
+            print("[SERIAL] SIMULACION=false exige hardware real. Revisa el cable, el puerto (SERIAL_PORT) "
+                  "y que el Monitor Serial del Arduino IDE esté cerrado.", flush=True)
+            raise HardwareNoDisponible(motivo)
         self.modo_simulacion = True
         print(f"[SERIAL] ⚠️ {motivo}", flush=True)
         print("[SERIAL] 🤖 ACTIVANDO MODO SIMULACIÓN: Las órdenes serán emuladas por software.", flush=True)
 
-    def enviar(self, orden: str, espera: float = 3.0) -> bool:
+    def enviar(self, orden: str, espera: float = ESPERA_ACK_S) -> bool:
         """
         Envía una orden ('VENT_ON', etc.) y espera confirmación ('OK:VENT_ON').
         Retorna True si fue confirmada.
@@ -137,6 +177,8 @@ class ArduinoBridge:
                         return True
 
                 print(f"[SERIAL] ❌ Timeout: No se recibió 'OK:{orden}' en {espera}s", flush=True)
+                return False
+            except HardwareNoDisponible:
                 return False
             except serial.SerialException as e:
                 print(f"[SERIAL-ERROR] Error en comunicación serie: {e}", flush=True)

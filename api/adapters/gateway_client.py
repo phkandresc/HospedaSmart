@@ -32,6 +32,11 @@ def unregister_gateway_connection(websocket: WebSocket) -> None:
         print("[GATEWAY-CLIENT] Gateway desconectado.", flush=True)
 
 
+def gateway_conectado() -> bool:
+    """Indica si hay un gateway conectado por WebSocket."""
+    return _active_gateway_ws is not None
+
+
 def handle_incoming_message(message_data: dict[str, Any]) -> None:
     """Procesa mensajes que llegan del gateway (acks o eventos)."""
     msg_type = message_data.get("type")

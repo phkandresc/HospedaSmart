@@ -8,7 +8,10 @@
 #
 # Corre fuera de Docker porque Docker en Windows no pasa puertos COM/USB.
 #
-# Archivos previstos:
+# Archivos:
 #   main.py          → arranca WebSocket + serie, orquesta la comunicación
 #   serial_bridge.py → leer/escribir al puerto serie con reconexión automática
 #   protocol.py      → traducir entre el protocolo JSON y los comandos de texto
+#   test_serial.py   → prueba directa PC ↔ Arduino sin API (python -m gateway.test_serial)
+#
+# Cómo probar: documentacion/guia-pruebas-hardware-y-simulacion.md

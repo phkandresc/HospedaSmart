@@ -13,6 +13,7 @@ import uvicorn
 
 from api.core.config import HOST, PORT
 from api.routers.alexa import router as alexa_router, set_main_event_loop
+from api.routers.dispositivos import router as dispositivos_router
 from api.adapters.gateway_client import (
     register_gateway_connection,
     unregister_gateway_connection,
@@ -48,6 +49,8 @@ app.add_middleware(
 
 # Montar router de Alexa
 app.include_router(alexa_router)
+# Control directo de dispositivos (pruebas sin Alexa y futuro panel)
+app.include_router(dispositivos_router)
 
 
 @app.get("/health")
