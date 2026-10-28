@@ -11,6 +11,7 @@ HospedaSmart es una plataforma que fusiona la administración logística en la n
 **Empieza aquí →** [`documentacion/guia-arquitectura.md`](documentacion/guia-arquitectura.md)
 
 * **Guía de Pruebas (Simulación vs Hardware):** [`documentacion/guia-pruebas-hardware-y-simulacion.md`](documentacion/guia-pruebas-hardware-y-simulacion.md) (cómo probar hoy en tu laptop y mañana con el kit y Alexa).
+* **Guía rápida con Alexa:** [`documentacion/guia-rapida-alexa.md`](documentacion/guia-rapida-alexa.md) (pasos mínimos para controlar luz, ventilador y puerta por voz).
 * **Guía de Arquitectura completa:** [`documentacion/guia-arquitectura.md`](documentacion/guia-arquitectura.md) (explica todo el sistema en 15 min).
 
 Para los documentos técnicos detallados, ver [`documentacion/arquitectura/`](documentacion/arquitectura/).
