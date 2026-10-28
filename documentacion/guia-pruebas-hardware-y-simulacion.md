@@ -33,7 +33,7 @@ En Linux/macOS: `python3 -m venv venv && source venv/bin/activate && pip install
 ### Cargar el sketch en el Arduino
 
 1. Conecta el Arduino (Keyestudio KS0085) por USB.
-2. Abre en Arduino IDE [`prueba-alexa/prueba-alexa/sensor_diagnostics/sensor_diagnostics.ino`](../prueba-alexa/prueba-alexa/sensor_diagnostics/sensor_diagnostics.ino).
+2. Abre en Arduino IDE [`firmware/sensor_diagnostics/sensor_diagnostics.ino`](../firmware/sensor_diagnostics/sensor_diagnostics.ino).
    Necesita las librerías **LiquidCrystal I2C** y **Servo**.
 3. Placa **Arduino Uno**, puerto correcto (`COM3`, `/dev/ttyUSB0`…) → **Subir**.
 4. ⚠️ **Cierra el Monitor Serial.** Si queda abierto, el puerto está ocupado y la PC no puede usarlo.
@@ -73,7 +73,7 @@ $env:SIMULACION="true"; python -m gateway.main
 
 Verás `[SERIAL] 🤖 ACTIVANDO MODO SIMULACIÓN` y `[GATEWAY] ✅ Conexión WebSocket establecida`.
 Prueba con el nivel 2 (`python -m api.test_hardware_local`) o con el simulador de Alexa
-(`python api\test_alexa_local.py 6`).
+(`python api\test_alexa_local.py 8`).
 
 ---
 
@@ -123,7 +123,8 @@ python -m api.test_hardware_local
 ✅ encender luz              82 ms  → Listo, luz encendida.
 ✅ encender ventilador       84 ms  → Listo, ventilador encendido.
 ...
-Resultado: 4/4 órdenes confirmadas.
+✅ abrir puerta              91 ms  → Listo, puerta abierta.
+Resultado: 6/6 órdenes confirmadas.
 ```
 
 También puedes mandar órdenes a mano desde el navegador en **http://localhost:8000/docs**
@@ -134,8 +135,8 @@ Invoke-RestMethod http://localhost:8000/dispositivos/estado
 Invoke-RestMethod -Method Post http://localhost:8000/dispositivos/ventilador/encender
 ```
 
-`POST /dispositivos/{ventilador|luz}/{encender|apagar}` usa **el mismo caso de uso** (`confort.py`)
-que Alexa, así que si esto funciona, lo único que queda por probar en el nivel 3 es la voz.
+`POST /dispositivos/{ventilador|luz}/{encender|apagar}` y `POST /dispositivos/puerta/{abrir|cerrar}`
+usan **los mismos casos de uso** (`confort.py`, `acceso.py`) que Alexa, así que si esto funciona, lo único que queda por probar en el nivel 3 es la voz.
 
 ### ¿Qué ocurre internamente?
 
@@ -151,12 +152,13 @@ Arduino llega a la API como "no confirmado" antes de que la API se rinda.
 
 ## 🗣️ Nivel 3 — Con Alexa (Echo Dot real)
 
-Solo cuando el nivel 2 pase.
+Solo cuando el nivel 2 pase. La guía completa de la consola, con más diagnóstico, está en
+[`alexa/README.md`](../alexa/README.md).
 
 1. **Skill** en la [consola de Alexa](https://developer.amazon.com/alexa/console/ask), con la misma
    cuenta del Echo: *Custom*, idioma *Spanish (US)*, hosting propio.
 2. **Build → Interaction Model → JSON Editor:** pega
-   [`prueba-alexa/prueba-alexa/interaction_model.json`](../prueba-alexa/prueba-alexa/interaction_model.json)
+   [`alexa/interaction_model.json`](../alexa/interaction_model.json)
    → **Save** → **Build**. La invocación es **"hospeda smart"**.
 3. **Túnel:** `ngrok http 8000` y copia la URL `https://…`.
 4. **Build → Endpoint → HTTPS:** `https://<tu-url-ngrok>/alexa` (**con `/alexa`**), certificado
@@ -177,7 +179,7 @@ por Amazon); para usarlo arranca la API sin esas variables.
 | Síntoma | Causa común | Solución |
 |---|---|---|
 | `PermissionError(13, 'Acceso denegado')` / `Device or resource busy` | El Monitor Serial u otro programa (otro gateway, `test_serial`) tiene el puerto | Cierra el Monitor Serial y los demás procesos que lo usen |
-| El Arduino no responde nada (ni texto) | El sketch cargado no es `sensor_diagnostics.ino` o tiene otro baudrate | Vuelve a subir el sketch; debe tener `Serial.begin(115200)` |
+| El Arduino no responde nada (ni texto) | El sketch cargado no es `firmware/sensor_diagnostics` o tiene otro baudrate | Vuelve a subir el sketch; debe tener `Serial.begin(115200)` |
 | `Timeout: No se recibió 'OK:...'` solo en la primera orden | La orden llegó mientras el Arduino arrancaba | Ya se corrige solo; si persiste, el sketch tarda más de 6 s en arrancar |
 | ✅ en pantalla pero el actuador no se mueve | Cableado o alimentación del kit | Revisa el mapa de pines en `firmware/README.md` |
 | Gateway en "MODO SIMULACIÓN" con el Arduino conectado | Puerto ocupado o no detectado (modo automático) | Usa `SIMULACION=false` y `SERIAL_PORT=COMx` |

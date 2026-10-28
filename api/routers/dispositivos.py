@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 
 from api.adapters.gateway_client import gateway_conectado
 from api.usecases.confort import controlar_confort
+from api.usecases.acceso import controlar_puerta
 
 router = APIRouter(prefix="/dispositivos", tags=["dispositivos"])
 
@@ -19,6 +20,15 @@ router = APIRouter(prefix="/dispositivos", tags=["dispositivos"])
 async def estado_gateway():
     """Indica si el gateway de la habitación está conectado a la API."""
     return {"gateway_conectado": gateway_conectado()}
+
+
+@router.post("/puerta/{accion}")
+async def controlar_cerrojo(accion: Literal["abrir", "cerrar"]):
+    """Abre o cierra el cerrojo y espera la confirmación del Arduino."""
+    ok, mensaje = await controlar_puerta(accion)
+    if not ok:
+        raise HTTPException(status_code=504, detail=mensaje)
+    return {"ok": True, "mensaje": mensaje}
 
 
 @router.post("/{dispositivo}/{accion}")

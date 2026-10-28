@@ -3,7 +3,7 @@
 Prueba de la cadena PC → API → Gateway → Arduino, sin Alexa.
 
 Requiere la API (python -m api.main) y el gateway (python -m gateway.main) corriendo.
-Llama al endpoint /dispositivos, que usa el mismo caso de uso de confort que Alexa.
+Llama al endpoint /dispositivos, que usa los mismos casos de uso (confort, acceso) que Alexa.
 
 Uso (desde la raíz del repo, con el venv activado):
   python -m api.test_hardware_local
@@ -19,6 +19,8 @@ SECUENCIA = [
     ("ventilador", "encender"),
     ("ventilador", "apagar"),
     ("luz", "apagar"),
+    ("puerta", "abrir"),
+    ("puerta", "cerrar"),
 ]
 
 

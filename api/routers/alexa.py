@@ -6,6 +6,7 @@ Implementa los handlers con ask-sdk-core y utiliza WebserviceSkillHandler
 para procesar la solicitud sin bloquear el event loop de FastAPI.
 """
 import asyncio
+from typing import Awaitable, Callable
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.concurrency import run_in_threadpool
@@ -20,6 +21,7 @@ from ask_sdk_webservice_support.webservice_handler import WebserviceSkillHandler
 
 from api.core.config import SKILL_ID, VERIFY_ALEXA_SIGNATURE, VERIFY_ALEXA_TIMESTAMP
 from api.usecases.confort import controlar_confort
+from api.usecases.acceso import controlar_puerta
 
 router = APIRouter()
 _main_event_loop: asyncio.AbstractEventLoop | None = None
@@ -54,29 +56,29 @@ class LaunchRequestHandler(AbstractRequestHandler):
         return (
             handler_input.response_builder
             .speak(texto)
-            .ask("Puedes pedirme encender o apagar el ventilador o la luz.")
+            .ask("Puedes pedirme encender o apagar el ventilador o la luz, o abrir o cerrar la puerta.")
             .response
         )
 
 
-class ConfortIntentHandler(AbstractRequestHandler):
-    """Maneja intents de confort (ventilador y luz)."""
+class OrdenIntentHandler(AbstractRequestHandler):
+    """
+    Intent que se traduce en una orden física, delegada a un caso de uso.
 
-    def __init__(self, intent_name: str, dispositivo: str, accion: str):
+    Se crea una instancia por intent, p. ej. EncenderVentiladorIntent -> controlar_confort("ventilador", "encender").
+    """
+
+    def __init__(self, intent_name: str, caso_de_uso: Callable[[], Awaitable[tuple[bool, str]]]):
         self.intent_name = intent_name
-        self.dispositivo = dispositivo
-        self.accion = accion
+        self.caso_de_uso = caso_de_uso
 
     def can_handle(self, handler_input):
         return is_intent_name(self.intent_name)(handler_input)
 
     def handle(self, handler_input):
-        print(f"[ALEXA] Intent {self.intent_name} -> {self.dispositivo} {self.accion}", flush=True)
+        print(f"[ALEXA] Intent {self.intent_name}", flush=True)
         try:
-            _, mensaje = _ejecutar_corutina_en_loop(
-                controlar_confort(self.dispositivo, self.accion),
-                timeout=3.0
-            )
+            _, mensaje = _ejecutar_corutina_en_loop(self.caso_de_uso(), timeout=3.0)
         except Exception as e:
             print(f"[ALEXA-ERROR] Error al procesar caso de uso: {e}", flush=True)
             mensaje = "Hubo un retraso al comunicar con la habitación. Intenta de nuevo."
@@ -96,7 +98,7 @@ class HelpIntentHandler(AbstractRequestHandler):
         return is_intent_name("AMAZON.HelpIntent")(handler_input)
 
     def handle(self, handler_input):
-        texto = "Puedes decirme: enciende el ventilador, apaga el ventilador, enciende la luz o apaga la luz."
+        texto = "Puedes decirme: enciende el ventilador, apaga la luz o abre la puerta. ¿Qué deseas hacer?"
         return handler_input.response_builder.speak(texto).ask(texto).response
 
 
@@ -107,7 +109,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
         return is_intent_name("AMAZON.FallbackIntent")(handler_input)
 
     def handle(self, handler_input):
-        texto = "No entendí esa orden. Puedes pedirme controlar el ventilador o la luz de la habitación."
+        texto = ("No entendí esa orden. Puedes decir: enciende o apaga la luz, "
+                 "enciende o apaga el ventilador, abre o cierra la puerta.")
         return handler_input.response_builder.speak(texto).ask(texto).response
 
 
@@ -131,24 +134,30 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
 
 
 class SessionEndedRequestHandler(AbstractRequestHandler):
-    """Cierre de sesión de Alexa."""
+    """Cierre de sesión de Alexa (silencio, error o salida). No se puede hablar aquí; solo se registra."""
 
     def can_handle(self, handler_input):
         return is_request_type("SessionEndedRequest")(handler_input)
 
     def handle(self, handler_input):
+        motivo = handler_input.request_envelope.request.reason
+        print(f"[ALEXA] Sesión terminada: {motivo}", flush=True)
         return handler_input.response_builder.response
 
 
 class IntentDesconocidoHandler(AbstractRequestHandler):
-    """Captura intents no registrados (ej. cuando falta sincronizar interaction_model)."""
+    """
+    Captura intents no registrados. Suele significar que el modelo de la consola de Alexa
+    no coincide con alexa/interaction_model.json. Va registrado al final para no tapar a los demás.
+    """
 
     def can_handle(self, handler_input):
         return is_request_type("IntentRequest")(handler_input)
 
     def handle(self, handler_input):
         nombre = handler_input.request_envelope.request.intent.name
-        print(f"[ALEXA] Intent no implementado en esta fase: {nombre}", flush=True)
+        print(f"[ALEXA] Intent no implementado: {nombre}. Si no es de una fase futura, pega "
+              "alexa/interaction_model.json en la consola de Alexa y pulsa Build Model.", flush=True)
         texto = "Esa función aún no está disponible en este módulo."
         return (
             handler_input.response_builder
@@ -188,18 +197,26 @@ sb.skill_id = SKILL_ID
 # 1. Saludo y peticiones base
 sb.add_request_handler(LaunchRequestHandler())
 
-# 2. Flujo 1: Confort (Ventilador y Luz)
-sb.add_request_handler(ConfortIntentHandler("EncenderVentiladorIntent", "ventilador", "encender"))
-sb.add_request_handler(ConfortIntentHandler("ApagarVentiladorIntent", "ventilador", "apagar"))
-sb.add_request_handler(ConfortIntentHandler("EncenderLuzIntent", "luz", "encender"))
-sb.add_request_handler(ConfortIntentHandler("ApagarLuzIntent", "luz", "apagar"))
+# 2. Órdenes físicas: (intent de Alexa, caso de uso que lo atiende)
+ORDENES = [
+    # Flujo 1: Confort (Ventilador y Luz)
+    ("EncenderVentiladorIntent", lambda: controlar_confort("ventilador", "encender")),
+    ("ApagarVentiladorIntent", lambda: controlar_confort("ventilador", "apagar")),
+    ("EncenderLuzIntent", lambda: controlar_confort("luz", "encender")),
+    ("ApagarLuzIntent", lambda: controlar_confort("luz", "apagar")),
+    # Flujo 3: Acceso (cerrojo; sin PIN todavía)
+    ("AbrirPuertaIntent", lambda: controlar_puerta("abrir")),
+    ("CerrarPuertaIntent", lambda: controlar_puerta("cerrar")),
+]
+for intent_name, caso_de_uso in ORDENES:
+    sb.add_request_handler(OrdenIntentHandler(intent_name, caso_de_uso))
 
 # 3. Handlers estándar y salvaguardas
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(SessionEndedRequestHandler())
-sb.add_request_handler(IntentDesconocidoHandler())
+sb.add_request_handler(IntentDesconocidoHandler())  # siempre el último
 
 sb.add_global_request_interceptor(LogRequestInterceptor())
 sb.add_exception_handler(CatchAllExceptionHandler())

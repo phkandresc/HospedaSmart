@@ -1,5 +1,11 @@
 # `prueba-alexa/` explicada — prueba de factibilidad del canal de voz
 
+> **Nota (2026-10-28):** la carpeta `prueba-alexa/` se eliminó del repositorio. Su contenido se
+> integró en la arquitectura nueva: los handlers en `api/routers/alexa.py`, la lógica en
+> `api/usecases/` (confort y acceso), el puerto serie en `gateway/`, el sketch en
+> `firmware/sensor_diagnostics/` y el modelo de interacción y la guía de la consola en `alexa/`.
+> Este documento se conserva como registro histórico; el código original sigue en el historial de git.
+
 > Documento de lectura rápida. Explica qué hay dentro de `prueba-alexa/`, cómo funciona y qué
 > decisiones de la prueba **no** deberían heredarse a la arquitectura definitiva.
 >

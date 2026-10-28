@@ -26,7 +26,7 @@ HospedaSmart/
 ├── gateway/                ← 🔌 puente API ↔ Arduino (nativo)
 ├── mocks/                  ← 🎭 servicios externos simulados (Docker)
 ├── firmware/               ← 🤖 sketch del Arduino
-├── prueba-alexa/           ← 🧪 prueba de concepto original (referencia)
+├── alexa/                  ← 🗣️ modelo de interacción y configuración de la skill
 ├── docker-compose.yml      ← levanta api + db + mocks
 └── .gitignore
 ```
